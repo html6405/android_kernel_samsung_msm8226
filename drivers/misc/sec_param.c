@@ -42,7 +42,7 @@ static void param_sec_operation(struct work_struct *work)
 	int ret = true;
 	struct sec_param_data_s *sched_param_data =
 		container_of(work, struct sec_param_data_s, sec_param_work);
-	
+
 	int flag = (sched_param_data->direction == PARAM_WR) ? (O_RDWR | O_SYNC) : O_RDONLY;
 
 	pr_debug("%s %p %x %d %d\n", __func__, sched_param_data->value, sched_param_data->offset, sched_param_data->size, sched_param_data->direction);
@@ -83,7 +83,7 @@ param_sec_debug_out:
 bool sec_open_param(void)
 {
 	int ret = true;
-	
+
 	pr_info("%s start \n",__func__);
 
 	if (param_data != NULL)
@@ -97,7 +97,7 @@ bool sec_open_param(void)
 	sched_sec_param_data.offset=SEC_PARAM_FILE_OFFSET;
 	sched_sec_param_data.size=sizeof(struct sec_param_data);
 	sched_sec_param_data.direction=PARAM_RD;
-	
+
 	schedule_work(&sched_sec_param_data.sec_param_work);
 	wait_for_completion(&sched_sec_param_data.work);
 
@@ -112,7 +112,7 @@ bool sec_open_param(void)
 bool sec_write_param(void)
 {
 	int ret = true;
-	
+
 	pr_info("%s start\n",__func__);
 
 	mutex_lock(&sec_param_mutex);
@@ -121,7 +121,7 @@ bool sec_write_param(void)
 	sched_sec_param_data.offset=SEC_PARAM_FILE_OFFSET;
 	sched_sec_param_data.size=sizeof(struct sec_param_data);
 	sched_sec_param_data.direction=PARAM_WR;
-	
+
 	schedule_work(&sched_sec_param_data.sec_param_work);
 	wait_for_completion(&sched_sec_param_data.work);
 
@@ -294,7 +294,7 @@ static ssize_t movinand_checksum_done_show
 		pr_err("checksum is not in valuable range.\n");
 		ret = 1;
 	}
-	return snprintf(buf, PAGE_SIZE, "%u\n", ret);
+	return sprintf(buf, "%u\n", ret);
 }
 static DEVICE_ATTR(movinand_checksum_done,
 				0664, movinand_checksum_done_show, NULL);
@@ -309,7 +309,7 @@ static ssize_t movinand_checksum_pass_show
 		pr_err("checksum is not in valuable range.\n");
 		ret = 1;
 	}
-	return snprintf(buf, PAGE_SIZE, "%u\n", ret);
+	return sprintf(buf, "%u\n", ret);
 }
 static DEVICE_ATTR(movinand_checksum_pass,
 				0664, movinand_checksum_pass_show, NULL);
@@ -361,8 +361,8 @@ static int __init sec_param_work_init(void)
 {
 	pr_info("%s: start\n", __func__);
 
-	sched_sec_param_data.offset=0;	
-	sched_sec_param_data.direction=0;	
+	sched_sec_param_data.offset=0;
+	sched_sec_param_data.direction=0;
 	sched_sec_param_data.size=0;
 	sched_sec_param_data.value=NULL;
 

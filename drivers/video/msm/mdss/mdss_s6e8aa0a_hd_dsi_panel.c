@@ -1469,8 +1469,6 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 	int i,j;
 #endif
 
-	printk("CALL mdss_dsi_panel_bl_ctrl backlight = %d\n", bl_level);
-
 	if (pdata == NULL) {
 		pr_err("%s: Invalid input data\n", __func__);
 		return;
@@ -1531,13 +1529,6 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 #endif
 	}
 
-#if !defined(CONFIG_MACH_S3VE3G_EUR)
-	if( msd.mfd->panel_power_on == false){
-		pr_err("%s: panel power off no bl ctrl\n", __func__);
-		return;
-	}
-#endif
-
 #if defined(CONFIG_ESD_ERR_FG_RECOVERY)
 	if (err_fg_working) {
 		pr_info("[LCD] %s : esd is working!! return.. \n", __func__);
@@ -1590,7 +1581,7 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 end:
 	return;
 }
-int bl_first_update=0;
+
 static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 {
 	struct mdss_dsi_ctrl_pdata *ctrl = NULL;
@@ -1607,7 +1598,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	msd.ctrl_pdata = ctrl;
 	msd.mpd = pdata;
 
-	printk("%s: ctrl=%pK ndx=%d\n", __func__, ctrl, ctrl->ndx);
+	printk("%s: ctrl=%p ndx=%d\n", __func__, ctrl, ctrl->ndx);
 
 			get_min_lux_table(&(mpd.gamma_initial[2]),
 						GAMMA_SET_MAX);
@@ -1615,7 +1606,7 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 
 	if (ctrl->on_cmds.cmd_cnt)
 		mdss_dsi_panel_cmds_send(ctrl, &ctrl->on_cmds);
-#if defined(CONFIG_MACH_S3VE3G_EUR)	
+#if defined(CONFIG_MACH_S3VE3G_EUR)
 	if(bl_first_update == 0){
 		bl_first_update = 1;
 		pr_err("to maintain default brightness\n");
@@ -1677,7 +1668,7 @@ static int mdss_dsi_panel_off(struct mdss_panel_data *pdata)
 #endif
 #endif
 
-    printk("%s: ctrl=%pK ndx=%d\n", __func__, ctrl, ctrl->ndx);
+    printk("%s: ctrl=%p ndx=%d\n", __func__, ctrl, ctrl->ndx);
 
 	if (ctrl->off_cmds.cmd_cnt)
 		mdss_dsi_panel_cmds_send(ctrl, &ctrl->off_cmds);
@@ -1719,7 +1710,7 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 		if (dchdr->dlen > len) {
 			pr_err("%s: dtsi cmd=%x error, len=%d",
 				__func__, dchdr->dtype, dchdr->dlen);
-			goto exit_free;
+			return -ENOMEM;
 		}
 		bp += sizeof(*dchdr);
 		len -= sizeof(*dchdr);
@@ -1731,13 +1722,16 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 	if (len != 0) {
 		pr_err("%s: dcs_cmd=%x len=%d error!",
 				__func__, buf[0], blen);
-		goto exit_free;
+		kfree(buf);
+		return -ENOMEM;
 	}
 
 	pcmds->cmds = kzalloc(cnt * sizeof(struct dsi_cmd_desc),
 						GFP_KERNEL);
-	if (!pcmds->cmds)
-		goto exit_free;
+	if (!pcmds->cmds){
+		kfree(buf);
+		return -ENOMEM;
+	}
 
 	pcmds->cmd_cnt = cnt;
 	pcmds->buf = buf;
@@ -1765,12 +1759,12 @@ static int mdss_dsi_parse_dcs_cmds(struct device_node *np,
 		pcmds->buf[0], pcmds->blen, pcmds->cmd_cnt, pcmds->link_state);
 
 	return 0;
-	
+
 exit_free:
 	kfree(buf);
 	return -ENOMEM;
 }
-int mdss_panel_dt_get_dst_fmt(u32 bpp, char mipi_mode, u32 pixel_packing,
+static int mdss_panel_dt_get_dst_fmt(u32 bpp, char mipi_mode, u32 pixel_packing,
 				char *dst_format)
 {
 	int rc = 0;
@@ -1899,6 +1893,7 @@ static int mdss_panel_parse_dt(struct device_node *np,
 	int rc, i, len, res[2];
 	const char *data;
 	static const char *pdest;
+	static const char *on_cmds_state, *off_cmds_state;
 	struct mdss_panel_info *pinfo = &(ctrl_pdata->panel_data.panel_info);
 	rc = of_property_read_u32(np, "qcom,mdss-dsi-panel-width", &tmp);
 	if (rc) {
@@ -2158,6 +2153,29 @@ static int mdss_panel_parse_dt(struct device_node *np,
 	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->off_cmds,
 		"qcom,mdss-dsi-off-command", "qcom,mdss-dsi-off-command-state");
 
+
+        on_cmds_state = of_get_property(np, "qcom,mdss-dsi-on-command-state", NULL);
+
+        if (!strncmp(on_cmds_state, "dsi_lp_mode", 11)) {
+            ctrl_pdata->dsi_on_state = DSI_LP_MODE;
+        } else if (!strncmp(on_cmds_state, "dsi_hs_mode", 11)) {
+            ctrl_pdata->dsi_on_state = DSI_HS_MODE;
+        } else {
+             pr_debug("%s: ON cmds state not specified. Set Default\n", __func__);
+             ctrl_pdata->dsi_on_state = DSI_LP_MODE;
+        }
+
+        off_cmds_state = of_get_property(np, "qcom,mdss-dsi-off-command-state", NULL);
+
+        if (!strncmp(off_cmds_state, "dsi_lp_mode", 11)) {
+            ctrl_pdata->dsi_off_state = DSI_LP_MODE;
+        } else if (!strncmp(off_cmds_state, "dsi_hs_mode", 11)) {
+            ctrl_pdata->dsi_off_state = DSI_HS_MODE;
+        } else {
+            pr_debug("%s: ON cmds state not specified. Set Default\n", __func__);
+            ctrl_pdata->dsi_off_state = DSI_LP_MODE;
+        }
+        pr_err("[ on state : %d, off state : %d\n",ctrl_pdata->dsi_on_state ,ctrl_pdata->dsi_off_state );
 	return 0;
 error:
 	return -EINVAL;
@@ -2170,7 +2188,7 @@ static ssize_t mipi_samsung_disp_acl_show(struct device *dev,
 {
 	int rc;
 
-	rc = snprintf((char *)buf, PAGE_SIZE, "%d\n", msd.dstat.acl_on);
+	rc = sprintf((char *)buf, "%d\n", msd.dstat.acl_on);
 	printk("acl status: %d\n", *buf);
 
 	return rc;
@@ -2291,7 +2309,8 @@ static ssize_t mdss_s6e8aa0a_auto_brightness_show(struct device *dev,
 {
 	int rc;
 
-	rc = snprintf(buf, PAGE_SIZE, "%d\n", msd.dstat.auto_brightness);
+	rc = sprintf(buf, "%d\n",
+					msd.dstat.auto_brightness);
 	pr_info("%s : auto_brightness : %d\n", __func__, msd.dstat.auto_brightness);
 
 	return rc;

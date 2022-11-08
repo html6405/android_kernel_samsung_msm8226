@@ -34,7 +34,7 @@
 #define LCD_DEBUG(X, ...) pr_info("[LCD]%s:"X, __func__, ## __VA_ARGS__);
 
 #include "smart_dimming.h"
-#include "smart_mtp_patek.h"
+#include "smart_mtp_ea8061v.h"
 
 #define MAX_BL 255
 
@@ -79,13 +79,9 @@ struct candella_lux_map {
 struct display_status {
 	unsigned char acl_on;
 	unsigned char curr_acl_cond;
-
-	unsigned char main_smart_dim_loaded;
-	unsigned char sub_smart_dim_loaded;
-
-	unsigned char main_panel_read_done;
-	unsigned char sub_panel_read_done;
-	
+	unsigned char is_smart_dim_loaded;
+	unsigned char is_panel_read_done;
+	unsigned char is_mdnie_loaded;
 	unsigned char auto_brightness;
 	unsigned char recovery_boot_mode;
 	unsigned char on;
@@ -103,16 +99,10 @@ struct display_status {
 	int elvss_need_update;
 	int siop_status;
 	int hbm_mode;
-	char elvss_value_main;
-	char elvss_value_sub;
+	char elvss_value;
 
 	int lcd_sel;
 
-	int coordinate_x;
-	int coordinate_y;
-
-	int coordinate_main_loaded;
-	int coordinate_sub_loaded;
 };
 
 struct mipi_samsung_driver_data {
@@ -130,12 +120,10 @@ struct mipi_samsung_driver_data {
 	char panel_name[MAX_PANEL_NAME_SIZE];
 	int panel;
 	unsigned int manufacture_id;
-	unsigned int manufacture_date_main;
-	unsigned int manufacture_date_sub;
+	unsigned int manufacture_date;
 	char ddi_id[5];
 	unsigned int id3;
-	struct smartdim_conf *sdimconf_main;
-	struct smartdim_conf *sdimconf_sub;
+	struct smartdim_conf *sdimconf;
 };
 
 enum {
@@ -151,6 +139,5 @@ int mipi_samsung_disp_send_cmd(enum mipi_samsung_cmd_list cmd, unsigned char loc
 int get_lcd_attached(void);
 int get_lcd_id(void);
 void mdss_dsi_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl, struct dsi_cmd_desc *cmds, int cnt, int flag);
-int samsung_switching_lcd(int flip_hall);
 
 #endif

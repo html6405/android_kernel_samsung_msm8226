@@ -6707,7 +6707,7 @@ enum hrtimer_restart sec_bat_polling_alarm_expired(struct hrtimer *timer)
 }
 
 #endif
-#if 0 /* obsolete, we don't need this function anymore */
+#if defined(CONFIG_SEC_MS01_PROJECT)
 static struct qpnp_chg_chip    * chg_chip;
 void change_boost_control(int on)
 {
@@ -6745,7 +6745,7 @@ qpnp_charger_probe(struct spmi_device *spmi)
 		pr_err("kzalloc() failed.\n");
 		return -ENOMEM;
 	}
-#if 0
+#if defined(CONFIG_MACH_MS01_LTE)
 	chg_chip =  chip;
 #endif
 #ifdef SEC_CHARGER_CODE

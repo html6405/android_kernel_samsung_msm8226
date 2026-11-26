@@ -644,6 +644,15 @@ void mdss_mdp_set_clk_rate(unsigned long rate)
 	unsigned long min_clk_rate;
 
 	min_clk_rate = max(rate, mdata->min_mdp_clk);
+#if defined(CONFIG_FB_MSM_MDSS_BOE_HD_PANEL)
+	/*
+	 * SM-T255S (q7) BOE 720p video panel: pclk is 69.3 MHz (wide h-porch),
+	 * the perf calc only gives ~56 MHz -> 75 MHz and the panel flickers with
+	 * multi-layer composition. 100 MHz verified flicker-free on device.
+	 */
+	if (min_clk_rate < 100000000)
+		min_clk_rate = 100000000;
+#endif
 
 	if (clk) {
 		mutex_lock(&mdp_clk_lock);

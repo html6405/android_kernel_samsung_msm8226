@@ -67,7 +67,11 @@
 
 static int restart_mode;
 
+#ifndef CONFIG_SEC_DEBUG
 void *restart_reason;
+#else
+extern void *restart_reason;
+#endif
 
 
 #ifdef CONFIG_USER_RESET_DEBUG

@@ -20,6 +20,9 @@
 #include <linux/delay.h>
 #include "mdss_fb.h"
 #include "mdss_mdp.h"
+#if defined(CONFIG_FB_MSM_MDSS_BOE_HD_PANEL)
+#include "mdss_boe_hd_dsi_panel.h"
+#endif
 
 /* truncate at 1k */
 #define MDSS_MDP_BUS_FACTOR_SHIFT 10
@@ -1263,6 +1266,9 @@ int mdss_mdp_ctl_intf_event(struct mdss_mdp_ctl *ctl, int event, void *arg)
 	if (!ctl || !ctl->panel_data)
 		return -ENODEV;
 
+#if defined(CONFIG_FB_MSM_MDSS_BOE_HD_PANEL)
+	make_sync_esd();
+#endif
 	pdata = ctl->panel_data;
 
 	pr_debug("sending ctl=%d event=%d\n", ctl->num, event);

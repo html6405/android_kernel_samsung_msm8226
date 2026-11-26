@@ -39,6 +39,19 @@
 #define MODEL_NAME                    "K2HH"
 #define MODULE_NAME                   "accelerometer_sensor"
 
+#if defined(CONFIG_MACH_Q7LTE_KOR)
+/*
+ * SM-T255S LOS port: the ms013g sensor HAL (BMA25x) expects an input device
+ * named "accelerometer", a "delay" attribute in ms and 1024 LSB/g data
+ * (K2HH gives 16384 LSB/g). Report in BMA254 units; avoid 0 (dropped by input core).
+ */
+#define K2HH_INPUT_NAME		"accelerometer"
+#define Q7_ACC(v)		({ int _q = (v) / 16; _q < 0 ? _q : _q + 1; })
+#else
+#define K2HH_INPUT_NAME		MODULE_NAME
+#define Q7_ACC(v)		(v)
+#endif
+
 #define CALIBRATION_FILE_PATH         "/efs/accel_calibration_data"
 #define CALIBRATION_DATA_AMOUNT       20
 #define MAX_ACCEL_1G                  16384
@@ -472,7 +485,17 @@ static int k2hh_read_accel_xyz(struct k2hh_p *data, struct k2hh_v *acc)
 	struct k2hh_v rawdata;
 	unsigned char buf[READ_DATA_LENTH];
 
+#if defined(CONFIG_MACH_Q7LTE_KOR)
+	{
+		/* SM-T255S: burst read returns zeros here; read byte by byte
+		 * like the Samsung q7lte driver does. */
+		int i;
+		for (i = 0; i < READ_DATA_LENTH; i++)
+			ret += k2hh_i2c_read(data, AXISDATA_REG + i, &buf[i], 1);
+	}
+#else
 	ret += k2hh_i2c_read(data, AXISDATA_REG, buf, READ_DATA_LENTH);
+#endif
 
 	if (ret < 0)
 		goto exit;
@@ -529,9 +552,9 @@ static void k2hh_work_func(struct work_struct *work)
 		for (timestamp = data->old_timestamp + delay; timestamp < timestamp_new - shift_timestamp; timestamp+=delay) {
 			time_hi = (int)((timestamp & TIME_HI_MASK) >> TIME_HI_SHIFT);
 			time_lo = (int)(timestamp & TIME_LO_MASK);
-			input_report_rel(data->input, REL_X, data->accdata.x);
-			input_report_rel(data->input, REL_Y, data->accdata.y);
-			input_report_rel(data->input, REL_Z, data->accdata.z);
+			input_report_rel(data->input, REL_X, Q7_ACC(data->accdata.x));
+			input_report_rel(data->input, REL_Y, Q7_ACC(data->accdata.y));
+			input_report_rel(data->input, REL_Z, Q7_ACC(data->accdata.z));
 			input_report_rel(data->input, REL_DIAL, time_hi);
 			input_report_rel(data->input, REL_MISC, time_lo);
 			input_sync(data->input);
@@ -540,9 +563,9 @@ static void k2hh_work_func(struct work_struct *work)
 
 	time_hi = (int)((timestamp_new & TIME_HI_MASK) >> TIME_HI_SHIFT);
 	time_lo = (int)(timestamp_new & TIME_LO_MASK);
-	input_report_rel(data->input, REL_X, data->accdata.x);
-	input_report_rel(data->input, REL_Y, data->accdata.y);
-	input_report_rel(data->input, REL_Z, data->accdata.z);
+	input_report_rel(data->input, REL_X, Q7_ACC(data->accdata.x));
+	input_report_rel(data->input, REL_Y, Q7_ACC(data->accdata.y));
+	input_report_rel(data->input, REL_Z, Q7_ACC(data->accdata.z));
 	input_report_rel(data->input, REL_DIAL, time_hi);
 	input_report_rel(data->input, REL_MISC, time_lo);
 	input_sync(data->input);
@@ -602,6 +625,9 @@ static ssize_t k2hh_enable_store(struct device *dev,
 			k2hh_set_range(data, K2HH_RANGE_2G);
 
 			k2hh_set_mode(data, K2HH_MODE_NORMAL);
+			/* LOS port: the regulator cycle above may reset the chip
+			 * (ODR = power-down), so program the ODR again. */
+			k2hh_set_odr(data);
 			atomic_set(&data->enable, ON);
 			k2hh_set_enable(data, ON);
 		}
@@ -657,12 +683,43 @@ static ssize_t k2hh_delay_store(struct device *dev,
 
 static DEVICE_ATTR(poll_delay, S_IRUGO | S_IWUSR | S_IWGRP,
 		k2hh_delay_show, k2hh_delay_store);
+#if defined(CONFIG_MACH_Q7LTE_KOR)
+static ssize_t k2hh_delay_ms_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct k2hh_p *data = dev_get_drvdata(dev);
+
+	return snprintf(buf, PAGE_SIZE, "%lld\n",
+			(long long)ktime_to_ms(data->poll_delay));
+}
+
+static ssize_t k2hh_delay_ms_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t size)
+{
+	char nsbuf[24];
+	int ms, ret;
+
+	ret = kstrtoint(buf, 10, &ms);
+	if (ret)
+		return ret;
+	if (ms < 1)
+		ms = 1;
+	snprintf(nsbuf, sizeof(nsbuf), "%lld", (long long)ms * NSEC_PER_MSEC);
+	k2hh_delay_store(dev, attr, nsbuf, strlen(nsbuf));
+	return size;
+}
+static DEVICE_ATTR(delay, S_IRUGO | S_IWUSR | S_IWGRP,
+		k2hh_delay_ms_show, k2hh_delay_ms_store);
+#endif
 static DEVICE_ATTR(enable, S_IRUGO | S_IWUSR | S_IWGRP,
 		k2hh_enable_show, k2hh_enable_store);
 
 static struct attribute *k2hh_attributes[] = {
 	&dev_attr_poll_delay.attr,
 	&dev_attr_enable.attr,
+#if defined(CONFIG_MACH_Q7LTE_KOR)
+	&dev_attr_delay.attr,
+#endif
 	NULL
 };
 
@@ -1148,7 +1205,7 @@ static int k2hh_input_init(struct k2hh_p *data)
 	if (!dev)
 		return -ENOMEM;
 
-	dev->name = MODULE_NAME;
+	dev->name = K2HH_INPUT_NAME;
 	dev->id.bustype = BUS_I2C;
 
 	input_set_capability(dev, EV_REL, REL_X);

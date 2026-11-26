@@ -145,6 +145,7 @@ extern struct bms_battery_data samsung_1720mAH_data;
 extern struct bms_battery_data samsung_2000mAH_victor_data;
 extern struct bms_battery_data samsung_lis_4450mAH_data;
 extern struct bms_battery_data samsung_8x26_2600mAh_data;
+extern struct bms_battery_data Samsung_8x26_Q7_3200mAh_data;
 
 int interpolate_fcc(struct single_row_lut *fcc_temp_lut, int batt_temp);
 int interpolate_scalingfactor(struct sf_lut *sf_lut, int row_entry, int pc);

@@ -108,6 +108,11 @@ config SENSORS_ADPD142
 	  This option enables hrm sensors using adpd142 driver.
 
 
+config SENSORS_TAOS_Q7
+	depends on I2C
+	tristate "TAOS TMD2672 light/proximity sensor (Q7)"
+	default n
+
 config SENSORS_TMD3782S
 	depends on I2C
 	tristate "SENSORS_TMD3782S"

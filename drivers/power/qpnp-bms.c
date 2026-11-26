@@ -4135,6 +4135,8 @@ static int set_battery_data(struct qpnp_bms_chip *chip)
 	batt_data = &samsung_2100mAH_data;
 #elif defined(CONFIG_MACH_MS01_EUR_3G)
 	batt_data = &samsung_8x26_2600mAh_data;
+#elif defined(CONFIG_MACH_Q7LTE_KOR)
+	batt_data = &Samsung_8x26_Q7_3200mAh_data;
 #elif defined(CONFIG_SEC_KANAS_PROJECT)
 	batt_data = &samsung_2000mAH_data;
 #elif defined(CONFIG_SEC_ATLANTIC3G_COMMON)

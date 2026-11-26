@@ -21,6 +21,16 @@ config FB_MSM_MDSS_HDMI_MHL_SII8334
 	  MHL (Mobile High-Definition Link) technology
 	  uses USB connector to output HDMI content
 
+config FB_MSM_MDSS_BOE_HD_PANEL
+        bool "MDSS BOE HD Panel (Q7)"
+        default n
+        ---help---
+        The MDSS BOE HD LCD panel (S6D7AA0) used by Galaxy W SM-T255S.
+
+config TCON_MDNIE_LITE
+        bool "DSI Tcon MDNIe lite support"
+        default n
+
 config FB_MSM_MDSS_SHARP_HD_PANEL
         bool "MDSS SHARP HD Panel"
         default n

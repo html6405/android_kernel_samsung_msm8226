@@ -1,0 +1,115 @@
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
+ *   
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+
+/dts-v1/;
+/include/ "msm8926.dtsi"
+/include/ "dsi-panel-boe-hd-video.dtsi"
+/include/ "msm8926-sec-q7ltechncmcc-r00.dtsi"
+
+/ {
+	model = "[SM-T255SKL Q7-LTE-KOR]Rev-00 8926 ";
+	compatible = "qcom,msm8926-mtp", "qcom,msm8926", "qcom,mtp";
+	qcom,msm-id = <200 8 0x10000>;
+};
+
+//CMD drv 10mA->8mA request H/W
+&sdhc_2 {
+	vdd-supply = <&pm8226_l18>;
+	qcom,vdd-voltage-level = <2950000 2950000>;
+	qcom,vdd-current-level = <9000 800000>;
+
+	vdd-io-supply = <&pm8226_l21>;
+	qcom,vdd-io-voltage-level = <1800000 2950000>;
+	qcom,vdd-io-current-level = <6 22000>;
+
+	qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
+	qcom,pad-drv-on = <0x4 0x3 0x4>; /* 10mA, 10mA, 10mA */
+	qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
+
+	qcom,clk-rates = <400000 25000000 50000000 100000000 200000000>;
+
+	#address-cells = <0>;
+	interrupt-parent = <&sdhc_2>;
+	interrupts = <0 1 2>;
+	#interrupt-cells = <1>;
+	interrupt-map-mask = <0xffffffff>;
+	interrupt-map = <0 &intc 0 125 0
+			1 &intc 0 221 0
+			2 &msmgpio 38 0x3>;
+	interrupt-names = "hc_irq", "pwr_irq", "status_irq";
+	cd-gpios = <&msmgpio 38 0x1>;
+
+	status = "ok";
+};
+
+
+&soc {
+	 i2c@f9924000 { /* BLSP-1 QUP-2 */
+		cell-index = <2>;
+		compatible = "qcom,i2c-qup";
+		reg = <0xf9924000 0x1000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg-names = "qup_phys_addr";
+		interrupts = <0 96 0>;
+		interrupt-names = "qup_err_intr";
+		qcom,i2c-bus-freq = <100000>;
+		qcom,i2c-src-freq = <19200000>;
+                qcom,master-id = <86>;
+	 };
+	 i2c@f9925000 {
+		pn547@2B {
+			compatible = "pn547";
+			reg = <0x2B>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <21 0>;
+			pn547,irq-gpio = <&msmgpio 21 0x00>;
+			pn547,ven-gpio = <&msmgpio 20 0x1>;
+			pn547,firm-gpio = <&msmgpio 62 0x00>;			
+		};
+	};
+
+	earjack {
+		/*Override GPIO properties*/
+		qcom,earjack-detect-gpio = <&msmgpio 69 0>;
+		qcom,earjack-sendend-gpio = <&msmgpio 35 0>;
+		/*Override det and btn zone ADC Values*/
+		det-zones-list = <&det_zones 0 10000 10 0>,
+                             <&det_zones 2800 10000 10 0>,
+                             <&det_zones 2801 10000 10 1>,
+                             <&det_zones 5999 10000 10 1>;
+		but-zones-list = <&but_zones 0 0 965>,
+                             <&but_zones 1 966 1380>,
+                             <&but_zones 2 1381 2500>;
+		mpp-channel-scaling = <6 1 1>;
+	};
+};
+
+/*
+ * LOS port workaround (2026-11-26): on SM-T255S the BOE panel flickers in Android
+ * whenever the CPU runs below 1094.4 MHz (root cause not found yet, see HANDOFF.md).
+ * Keep only >= 1094.4 MHz in the cpufreq table. Remove when the real cause is fixed.
+ */
+&soc {
+	qcom,msm-cpufreq@0 {
+		qcom,cpufreq-table =
+			< 1094400 4066 >,
+			< 1190400 4066 >,
+			< 1305600 4066 >,
+			< 1344000 4066 >,
+			< 1401600 4066 >,
+			< 1497600 4066 >,
+			< 1593600 4066 >;
+	};
+};

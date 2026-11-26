@@ -47,6 +47,8 @@ else ifeq ($(CONFIG_FB_MSM_MDSS_MAGNA_OCTA_VIDEO_720P_PT_PANEL),y)
 mdss-dsi-objs += logo.o mdss_samsung_dsi_panel.o smart_mtp_ea8061.o smart_mtp_s6e8aa4.o
 else ifeq ($(CONFIG_FB_MSM_MDSS_SAMSUNG_OCTA_VIDEO_720P_PT_PANEL),y)
 mdss-dsi-objs += logo.o mdss_samsung_dsi_panel.o smart_mtp_s6e8aa4.o
+else ifeq ($(CONFIG_FB_MSM_MDSS_BOE_HD_PANEL),y)
+mdss-dsi-objs += logo.o mdss_boe_hd_dsi_panel.o
 else ifeq ($(CONFIG_FB_MSM_MDSS_SHARP_HD_PANEL),y)
 mdss-dsi-objs += logo.o mdss_sharp_hd_dsi_panel.o
 else ifeq ($(CONFIG_FB_MSM_MIPI_SAMSUNG_TFT_VIDEO_WQXGA_PT_PANEL),y)
@@ -114,6 +116,7 @@ ifeq ($(CONFIG_FB_MSM_MDSS_S6E8AA0A_HD_PANEL),y)
 obj-$(CONFIG_MDNIE_LITE_TUNING) += mdss_video_enhance.o
 else
 obj-$(CONFIG_MDNIE_LITE_TUNING) += mdnie_lite_tuning.o
+obj-$(CONFIG_TCON_MDNIE_LITE) += dsi_tcon_mdnie_lite.o
 endif
 obj-$(CONFIG_MDNIE_TFT_MSM8X26) += mdnie_tft_msm8x26.o
 obj-$(CONFIG_CABC_TUNING) += cabc_tuning.o

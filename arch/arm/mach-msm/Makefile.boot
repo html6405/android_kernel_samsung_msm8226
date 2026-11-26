@@ -462,6 +462,9 @@ else ifeq ($(CONFIG_MACH_VICTOR3GDSDTV_LTN),y)
 	 dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-sec-victor3gdsdtv-r02.dtb
 else ifeq ($(CONFIG_MACH_S3VE3G_EUR),y)
 	 dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-sec-s3ve3geur-r04.dtb
+else ifeq ($(CONFIG_MACH_Q7LTE_KOR),y)
+		dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-sec-q7ltekor-r00.dtb
+		dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-sec-q7ltekor-r01.dtb
 else ifeq ($(CONFIG_MACH_MS01_EUR_3G),y)
                 dtb-$(CONFIG_ARCH_MSM8226)      += msm8226-sec-ms013geur-r00.dtb
                 dtb-$(CONFIG_ARCH_MSM8226)      += msm8226-sec-ms013geur-r01.dtb

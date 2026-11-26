@@ -1197,6 +1197,18 @@ config MACH_S3VE3G_EUR
          MSM8226 MODEL S3VE 3G EUR Specific changes for differentiating
          it with the other models on the same MSM8x26 chipset.
 
+config SEC_Q7_PROJECT
+        bool "Q7 Projects (Galaxy W SM-T255S)"
+        default n
+        help
+         Common flag for the Q7 (SM-T255S) models.
+
+config MACH_Q7LTE_KOR
+        depends on SEC_Q7_PROJECT
+        bool "MSM8926 Q7 LTE KOR (SM-T255S)"
+        help
+         Support for the Samsung Galaxy W SM-T255S (q7lteskt).
+
 config SEC_MS01_PROJECT
         bool "MS01 Projects"
         default n

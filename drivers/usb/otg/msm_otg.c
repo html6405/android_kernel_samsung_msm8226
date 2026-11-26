@@ -4477,6 +4477,11 @@ struct msm_otg_platform_data *msm_otg_dt_to_pdata(struct platform_device *pdev)
 		of_property_read_u32_array(node, "qcom,hsusb-otg-phy-init-seq",
 				pdata->phy_init_seq,
 				len/sizeof(*pdata->phy_init_seq));
+#if defined(CONFIG_MACH_Q7LTE_KOR)
+		/* Samsung SM-T255S USB PHY tuning (from Samsung q7lte kernel) */
+		pdata->phy_init_seq[2] = 0x7A;
+		pdata->phy_init_seq[4] = 0x24;
+#endif
 	}
 	of_property_read_u32(node, "qcom,hsusb-otg-power-budget",
 				&pdata->power_budget);

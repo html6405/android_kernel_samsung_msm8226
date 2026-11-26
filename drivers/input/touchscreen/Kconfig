@@ -1140,6 +1140,12 @@ config TOUCHSCREEN_GT9XX
 
           If unsure, say N.
 
+config TOUCHSCREEN_ZINITIX_Q7
+	tristate "ZINITIX BT532 I2C Touchscreen (Q7)"
+	depends on I2C
+	help
+	  Zinitix touchscreen of Galaxy W SM-T255S (q7).
+
 config TOUCHSCREEN_ZINITIX_BT531
 	tristate "ZINITIX BT531 I2C Touchscreen"
 	depends on I2C

@@ -93,6 +93,7 @@ obj-$(CONFIG_TOUCHSCREEN_CYTTSP5)	+= cyttsp5/
 obj-$(CONFIG_TOUCHSCREEN_IST30XX) += imagis/
 obj-$(CONFIG_INPUT_WACOM_HL) += wacom_hl/
 obj-$(CONFIG_TOUCHSCREEN_CYPRESS_CYTTSP4) += cyttsp4/
+obj-$(CONFIG_TOUCHSCREEN_ZINITIX_Q7)	+= zinitix_bt_q7.o
 obj-$(CONFIG_TOUCHSCREEN_ZINITIX_BT531)	+= zinitix_touch.o
 obj-$(CONFIG_TOUCHSCREEN_MMS134S)   += mms134S_ts.o
 obj-$(CONFIG_TOUCHSCREEN_MMS136)   += melfas_mms136/
